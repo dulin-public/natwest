@@ -32,11 +32,6 @@ elsif action == "statement"
     File.open('saved_file', 'wb'){|f| f << transactions}
     puts "#{transactions}"
   end
-elsif action == "upload"
-  ZoomInternet::UploadStatement.new.tap do |zoom| 
-    zoom.login
-    zoom.upload
-  end
 elsif action == "auto"
   puts "Logging into bank:"
   Natwest::Customer.new.tap do |nw|
@@ -55,9 +50,7 @@ else
   Commands:
     summary
       Displays an account summary and recent transactions
-    statement 
+    statement
       Download last week statement
-    upload 
-      Upload statement into the system
     "
 end

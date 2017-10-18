@@ -2,7 +2,6 @@
 $LOAD_PATH.unshift File.join(File.dirname(__FILE__), '..', 'lib')
 
 require 'natwest'
-require 'zoominternet'
 require 'highline/import'
 
 puts "Logging into bank:"

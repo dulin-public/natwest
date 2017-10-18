@@ -20,3 +20,4 @@ pkg
 .*.un~
 saved_file
 ## PROJECT::SPECIFIC
+Gemfile.lock
