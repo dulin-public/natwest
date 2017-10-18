@@ -1,43 +1,63 @@
 #!/usr/bin/env ruby
 $LOAD_PATH.unshift File.join(File.dirname(__FILE__), '..', 'lib')
+
 require 'natwest'
 require 'highline/import'
 
-CONFIG = File.expand_path("~/.natwest.yaml")
+action = ARGV[0]
 
-if File.exists?(CONFIG) 
-  if File.world_readable?(CONFIG) or not File.owned?(CONFIG)
-    mode = File.stat(CONFIG).mode.to_s(8)
-    $stderr.puts "#{CONFIG}: Insecure permissions: #{mode}"
-  end
-end
+if action == "summary"
 
-credentials = YAML.load(File.read(CONFIG)) rescue {}
-
-['customer number', 'PIN', 'password'].each do |credential|
-  key = credential.tr(' ','_').downcase.to_sym
-  next if credentials.key?(key)
-  unless $stdin.tty? and $stdout.tty?
-    $stderr.puts "Can't prompt for credentials; STDIN or STDOUT is not a TTY"
-    exit(1)
-  end
-  credentials[key] = ask("Please enter your #{credential}:") do |q| 
-    q.echo = false
-  end
-end
-
-Natwest::Customer.new.tap do |nw|
-  nw.login credentials
-  nw.accounts.each do |acc|
-    puts '###'
-    puts "#{acc.name} [#{acc.number}; #{acc.sort_code}] " +
-       "balance: #{acc.balance}; available: #{acc.available}"
-    puts "\nRecent Transactions:"
-    acc.transactions.each do |trans|
-      amount = trans[:credit] ? "+#{trans[:credit]}" : "-#{trans[:debit]}"
-      puts "#{trans[:date]}: #{amount}"
-      puts "\t" + trans[:details]
+  Natwest::Customer.new.tap do |nw|
+    nw.login
+    nw.accounts.each do |acc|
+      puts '###'
+      puts "#{acc.name} [#{acc.number}; #{acc.sort_code}] " +
+         "balance: #{acc.balance}; available: #{acc.available}"
+      puts "\nRecent Transactions:"
+      acc.transactions.each do |trans|
+        amount = trans[:credit] ? "+#{trans[:credit]}" : "-#{trans[:debit]}"
+        puts "#{trans[:date]}: #{amount}"
+        puts "\t" + trans[:details]
+      end
+      puts
     end
-    puts
   end
+elsif action == "statement"
+
+  Natwest::Customer.new.tap do |nw|
+    nw.login
+    transactions = nw.statement
+
+    File.open('saved_file', 'wb'){|f| f << transactions}
+    puts "#{transactions}"
+  end
+elsif action == "upload"
+  ZoomInternet::UploadStatement.new.tap do |zoom| 
+    zoom.login
+    zoom.upload
+  end
+elsif action == "auto"
+  puts "Logging into bank:"
+  Natwest::Customer.new.tap do |nw|
+    nw.login
+    transactions = nw.statement
+
+    File.open('saved_file.csv', 'wb'){|f| f << transactions}
+  end
+  puts "Statement Downloaded"
+else
+ puts "This is a rudimentary API for Natwest Online banking.
+
+  Usage:
+  nw <command>
+
+  Commands:
+    summary
+      Displays an account summary and recent transactions
+    statement 
+      Download last week statement
+    upload 
+      Upload statement into the system
+    "
 end
