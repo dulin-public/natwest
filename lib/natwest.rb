@@ -127,19 +127,19 @@ module Natwest
       assert(page.title.include?('Statements'),
              "Got '#{page.title}' instead of Statements")
 
-      self.page = page.link_with(text: 'Download/export transactions').click
+      self.page = page.link_with(text: 'Download or export transactions').click
       assert(page.title.include?('Transactions – Download transactions – Select account and period'),
              "Got '#{page.title}' instead of Transactions – Download transactions – Select account and period")
 
-      form = page.form_with(action: './StatementsDownloadFixedPeriod.aspx')
+      form = page.form_with(action: './StatementsDownloadFixedPeriodAndSpecificDates.aspx')
       form.field_with(name: 'ctl00$mainContent$SS6SPDDA').option_with(text: 'Last week').select
-      form.field_with(name: 'ctl00$mainContent$SS6SDDDA').option_with(text: 'Microsoft Excel, Lotus 123, Text (CSV file)').select
+      form.field_with(name: 'ctl00$mainContent$SS6SDDDA').option_with(text: 'Excel, Lotus 123, Text (CSV file)').select
       self.page = form.click_button
 
       assert(page.title.include?('Transactions – Download transactions – Download'),
              "Got '#{page.title}' instead of Transactions – Download transactions – Download")
 
-      form = page.form_with(action: './StatementsDownloadFixedPeriod.aspx')
+      form = page.form_with(action: './StatementsDownloadFixedPeriodAndSpecificDates.aspx')
       button = form.button_with(value: 'Download transactions')
       self.page = form.submit(button)
 
